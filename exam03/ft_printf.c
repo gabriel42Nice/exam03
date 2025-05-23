@@ -1,38 +1,80 @@
-
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
 
-static void putstr(char *s, int *c) {
-    if (!s) s = "(null)";
-    while (*s) *c += write(1, s++, 1);
-}
-
-static void putnbr(int n, int *c) {
-    if (n == -2147483648) return putstr("-2147483648", c);
-    if (n < 0) *c += write(1, "-", 1), n = -n;
-    if (n > 9) putnbr(n / 10, c);
-    *c += write(1, &((char[]){"0"[0] + n % 10}), 1);
-}
-
-static void puthex(unsigned int n, int *c) {
-    char *h = "0123456789abcdef";
-    if (n >= 16) puthex(n / 16, c);
-    *c += write(1, &h[n % 16], 1);
-}
-
-int ft_printf(const char *f, ...) {
-    va_list a; int c = 0;
-    va_start(a, f);
-    while (*f) {
-        if (*f == '%' && *++f)
-            *f == 's' ? putstr(va_arg(a, char *), &c) :
-            *f == 'd' ? putnbr(va_arg(a, int), &c) :
-            *f == 'x' ? puthex(va_arg(a, unsigned int), &c) :
-            (c += write(1, f, 1));
-        else
-            c += write(1, f, 1);
-        f++;
+static void ft_putstr(const char *s, int *count)
+{
+    if (!s)
+        s = "(null)";
+    while (*s)
+    {
+        write(1, s++, 1);
+        (*count)++;
     }
-    va_end(a);
-    return c;
+}
+
+static void ft_putnbr(int n, int *count)
+{
+    char c;
+
+    if (n == -2147483648)
+    {
+        ft_putstr("-2147483648", count);
+        return;
+    }
+    if (n < 0)
+    {
+        write(1, "-", 1);
+        (*count)++;
+        n = -n;
+    }
+    if (n > 9)
+        ft_putnbr(n / 10, count);
+    c = (n % 10) + '0';
+    write(1, &c, 1);
+    (*count)++;
+}
+
+static void ft_puthex(unsigned int n, int *count)
+{
+    char *hex = "0123456789abcdef";
+
+    if (n >= 16)
+        ft_puthex(n / 16, count);
+    write(1, &hex[n % 16], 1);
+    (*count)++;
+}
+
+int ft_printf(const char *format, ...) /* You can find all this function in the manual. "man va_arg", "man 2 va_arg", "man 3 va_arg" */
+{
+    va_list args;
+    int count = 0;
+
+    va_start(args, format);
+    while (*format)
+    {
+        if (*format == '%' && *(format + 1))
+        {
+            format++;
+            if (*format == 's')
+                ft_putstr(va_arg(args, char *), &count);
+            else if (*format == 'd')
+                ft_putnbr(va_arg(args, int), &count);
+            else if (*format == 'x')
+                ft_puthex(va_arg(args, unsigned int), &count);
+            else
+            {
+                write(1, format, 1);
+                count++;
+            }
+        }
+        else
+        {
+            write(1, format, 1);
+            count++;
+        }
+        format++;
+    }
+    va_end(args);
+    return count;
 }
